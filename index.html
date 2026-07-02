@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="되는 사람">
@@ -28,7 +28,7 @@
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",sans-serif;
     background:var(--bg);color:var(--text);font-size:16px;line-height:1.5;
-    padding-bottom:78px;-webkit-text-size-adjust:100%;
+    padding-bottom:calc(104px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%;
   }
   /* ---------- Top bar ---------- */
   .topbar{
@@ -131,12 +131,12 @@
   /* ---------- Bottom nav ---------- */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fff;
     border-top:1px solid #dcdfda;display:flex;box-shadow:0 -1px 6px rgba(0,0,0,.06);
-    padding-bottom:env(safe-area-inset-bottom);}
-  .bottomnav button{flex:1;background:none;border:none;padding:9px 2px 8px;font-size:10.5px;
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);}
+  .bottomnav button{flex:1;background:none;border:none;padding:14px 2px 12px;font-size:11.5px;
     color:var(--muted);cursor:pointer;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;}
-  .bottomnav button .ic{font-size:20px;line-height:1;}
+  .bottomnav button .ic{font-size:23px;line-height:1;}
   .bottomnav button.active{color:var(--green);}
-  .saved-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  .saved-toast{position:fixed;bottom:calc(106px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);
     background:rgba(34,164,93,.95);color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;font-weight:600;
     opacity:0;pointer-events:none;transition:opacity .3s;z-index:80;box-shadow:var(--shadow);}
   .saved-toast.show{opacity:1;}
