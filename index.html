@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="되는 사람">
+<meta name="theme-color" content="#22a45d">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>되는 사람 · 플래너</title>
+<style>
+  :root{
+    --green:#22a45d;
+    --green-dark:#1b8b4e;
+    --gray-head:#8f8f8f;
+    --gray-box:#c9cbc8;
+    --box-bg:#f4f6f3;
+    --line:#8fb99f;
+    --text:#2a2f2c;
+    --muted:#6b716d;
+    --card:#ffffff;
+    --bg:#e9ebe7;
+    --shadow:0 1px 3px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",sans-serif;
+    background:var(--bg);color:var(--text);font-size:16px;line-height:1.5;
+    padding-bottom:78px;-webkit-text-size-adjust:100%;
+  }
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:50;background:var(--green);color:#fff;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px;box-shadow:var(--shadow);
+  }
+  .topbar h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.3px;}
+  .topbar .sub{font-size:12px;opacity:.85;font-weight:400;}
+  .topbar-actions button{
+    background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;
+    padding:7px 11px;border-radius:8px;margin-left:6px;font-weight:600;cursor:pointer;
+  }
+  .topbar-actions button:active{background:rgba(255,255,255,.32);}
+  /* ---------- Layout ---------- */
+  .wrap{max-width:840px;margin:0 auto;padding:16px;}
+  .page{display:none;animation:fade .25s ease;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  /* ---------- Cards / sections ---------- */
+  .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
+  .sec-head{
+    background:var(--gray-head);color:#fff;font-weight:700;font-size:14px;
+    padding:8px 12px;border-radius:8px 8px 0 0;margin:-4px -4px 10px;
+  }
+  .field-label{font-weight:700;font-size:14px;color:#4a4f4c;margin:2px 0 6px;}
+  .green-head{background:var(--green);color:#fff;text-align:center;font-weight:700;
+    padding:9px;border-radius:8px;margin-bottom:14px;letter-spacing:1px;}
+  /* ---------- Inputs ---------- */
+  input[type=text],input[type=date],input[type=number],textarea{
+    width:100%;border:none;border-bottom:2px solid var(--line);background:var(--box-bg);
+    padding:9px 10px;font-size:16px;font-family:inherit;color:var(--text);border-radius:6px 6px 0 0;
+    margin-bottom:8px;transition:border-color .15s;
+  }
+  input:focus,textarea:focus{outline:none;border-bottom-color:var(--green);background:#eef4ef;}
+  textarea{resize:vertical;min-height:60px;line-height:1.6;}
+  .story-area{min-height:52vh;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr;}}
+  /* ---------- Checkboxes ---------- */
+  .chk{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #eee;}
+  .chk:last-child{border-bottom:none;}
+  .chk input{width:22px;height:22px;accent-color:var(--green);flex:none;}
+  .chk input:checked + span{color:var(--muted);text-decoration:line-through;}
+  .chk .grow{flex:1;}
+  .chk-inline{display:inline-flex;align-items:center;gap:7px;background:var(--box-bg);
+    padding:8px 12px;border-radius:8px;margin:0 8px 8px 0;font-size:13px;font-weight:600;}
+  .chk-inline input{width:20px;height:20px;accent-color:var(--green);}
+  /* ---------- Repetition tracker ---------- */
+  .rep-track{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .rep-box{width:44px;height:44px;border-radius:9px;border:2px solid var(--gray-box);
+    background:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:var(--muted);cursor:pointer;font-size:14px;user-select:none;transition:.12s;}
+  .rep-box.on{background:var(--green);border-color:var(--green);color:#fff;transform:scale(1.03);}
+  /* ---------- Day nav ---------- */
+  .daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .daynav button{background:var(--card);border:1px solid #d3d6d2;border-radius:10px;
+    width:44px;height:44px;font-size:20px;font-weight:700;color:var(--green);cursor:pointer;box-shadow:var(--shadow);}
+  .daynav input{margin:0;flex:1;text-align:center;font-weight:700;border-radius:10px;border:1px solid #d3d6d2;background:#fff;}
+  .today-btn{width:auto!important;padding:0 14px;font-size:13px!important;}
+  /* ---------- Goals list ---------- */
+  .goal-item{border:1px solid #e2e5e1;border-radius:12px;padding:12px;margin-bottom:12px;background:#fbfcfb;}
+  .goal-item summary{font-weight:700;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .goal-item summary::-webkit-details-marker{display:none;}
+  .goal-title-txt{flex:1;}
+  .badge{font-size:11px;background:var(--green);color:#fff;padding:3px 8px;border-radius:20px;font-weight:700;white-space:nowrap;}
+  .mini-btn{background:#eef1ee;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#444;cursor:pointer;}
+  .mini-btn.danger{background:#fbeaea;color:#b5382f;}
+  .mini-btn.add{background:var(--green);color:#fff;width:100%;padding:12px;font-size:15px;margin-top:4px;}
+  .row-end{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;}
+  /* ---------- Dashboard ---------- */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat{background:var(--card);border-radius:14px;padding:16px;box-shadow:var(--shadow);text-align:center;}
+  .stat .num{font-size:30px;font-weight:800;color:var(--green);line-height:1.1;}
+  .stat .lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+  .progress{height:10px;background:#e3e6e2;border-radius:6px;overflow:hidden;margin-top:8px;}
+  .progress > i{display:block;height:100%;background:var(--green);border-radius:6px;transition:width .3s;}
+  .dash-goal{background:var(--card);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:10px;}
+  .dash-goal .gt{font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:8px;}
+  /* ---------- Log entries ---------- */
+  .log-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #eee;cursor:pointer;}
+  .log-item:last-child{border-bottom:none;}
+  .log-item:active{background:#f2f5f2;}
+  .log-date{font-weight:700;font-size:13px;color:var(--green-dark);white-space:nowrap;min-width:78px;}
+  .log-sum{flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .log-dots{display:flex;gap:3px;flex:none;}
+  .log-dots i{width:8px;height:8px;border-radius:50%;background:#dde0dc;display:block;}
+  .log-dots i.on{background:var(--green);}
+  .log-more{text-align:center;font-size:13px;font-weight:600;color:var(--green-dark);padding:10px;cursor:pointer;}
+  .quicklinks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
+  .quicklinks button{background:var(--card);border:1px solid #dde0dc;border-radius:12px;padding:14px;font-size:14px;
+    font-weight:700;color:var(--text);cursor:pointer;box-shadow:var(--shadow);text-align:left;}
+  .quicklinks button span{display:block;font-size:20px;margin-bottom:4px;}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:18px;}
+  /* ---------- Segmented (life horizon) ---------- */
+  .seg{display:flex;background:#dfe2de;border-radius:10px;padding:4px;margin-bottom:14px;gap:4px;}
+  .seg-btn{flex:1;border:none;background:none;padding:10px 6px;border-radius:8px;font-size:14px;
+    font-weight:700;color:var(--muted);cursor:pointer;}
+  .seg-btn.active{background:#fff;color:var(--green-dark);box-shadow:var(--shadow);}
+  /* ---------- Bottom nav ---------- */
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fff;
+    border-top:1px solid #dcdfda;display:flex;box-shadow:0 -1px 6px rgba(0,0,0,.06);
+    padding-bottom:env(safe-area-inset-bottom);}
+  .bottomnav button{flex:1;background:none;border:none;padding:9px 2px 8px;font-size:10.5px;
+    color:var(--muted);cursor:pointer;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .bottomnav button .ic{font-size:20px;line-height:1;}
+  .bottomnav button.active{color:var(--green);}
+  .saved-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:rgba(34,164,93,.95);color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .3s;z-index:80;box-shadow:var(--shadow);}
+  .saved-toast.show{opacity:1;}
+  .hint{font-size:12px;color:var(--muted);margin:2px 0 10px;}
+  h2.pt{font-size:18px;margin:2px 0 14px;color:var(--green-dark);}
+  /* ---------- Sync modal ---------- */
+  #sync-dot{font-size:11px;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;
+    display:none;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.25);
+    width:100%;max-width:440px;padding:18px;margin-top:40px;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .modal-head h2{font-size:18px;margin:0;color:var(--green-dark);}
+  .modal-x{background:#eef1ee;border:none;border-radius:8px;width:34px;height:34px;font-size:15px;cursor:pointer;color:#444;}
+  .sync-sec{border-top:1px solid #eee;padding-top:12px;margin-top:12px;}
+  #sync-status{padding:8px 10px;background:var(--box-bg);border-radius:8px;margin:6px 0 4px;}
+  #sync-status.ok{background:#e6f5ec;color:var(--green-dark);font-weight:600;}
+  #sync-status.err{background:#fbeaea;color:#b5382f;font-weight:600;}
+  #sync-btn.on{background:rgba(255,255,255,.32);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>되는 사람 <span class="sub">플래너</span></h1>
+  </div>
+  <div class="topbar-actions">
+    <button id="sync-btn" onclick="openSync()"><span id="sync-dot">○</span> 동기화</button>
+    <button onclick="exportData()">내보내기</button>
+    <button onclick="document.getElementById('importFile').click()">불러오기</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<!-- ===== 동기화 / 설정 모달 ===== -->
+<div class="modal-overlay" id="sync-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>☁️ 클라우드 동기화</h2>
+      <button class="modal-x" onclick="closeSync()">✕</button>
+    </div>
+    <p class="hint" id="sync-status">이 기기에만 저장 중입니다.</p>
+
+    <div class="sync-sec">
+      <div class="field-label">1. Supabase 연결</div>
+      <input type="text" id="sb-url" placeholder="Project URL (https://xxxx.supabase.co)" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input type="text" id="sb-key" placeholder="anon public key" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button class="mini-btn" style="width:100%;margin-top:2px;" onclick="saveConn()">연결 정보 저장</button>
+    </div>
+
+    <div class="sync-sec">
+      <div class="field-label">2. 계정</div>
+      <input type="email" id="sb-email" placeholder="이메일" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input type="password" id="sb-pass" placeholder="비밀번호 (6자 이상)">
+      <div style="display:flex;gap:8px;">
+        <button class="mini-btn" style="flex:1;" onclick="doAuth('signup')">회원가입</button>
+        <button class="mini-btn add" style="flex:1;margin-top:0;" onclick="doAuth('login')">로그인</button>
+      </div>
+    </div>
+
+    <div class="sync-sec" id="sync-actions" style="display:none;">
+      <div class="field-label">3. 동기화</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mini-btn add" style="flex:1;margin-top:0;" onclick="syncNow()">지금 동기화</button>
+        <button class="mini-btn danger" style="flex:1;" onclick="doLogout()">로그아웃</button>
+      </div>
+    </div>
+
+    <p class="hint" style="margin-top:12px;">설정 방법은 <b>Supabase-동기화-설정.md</b> 참고. 클라우드를 꺼도 기기 기록은 유지됩니다.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ===== 대시보드 ===== -->
+  <section class="page active" id="page-dash">
+    <h2 class="pt">📊 대시보드</h2>
+    <div class="stat-grid" style="margin-bottom:14px;">
+      <div class="stat"><div class="num" id="st-streak">0</div><div class="lbl">연속 기록 (일)</div></div>
+      <div class="stat"><div class="num" id="st-days">0</div><div class="lbl">총 작성 일수</div></div>
+    </div>
+    <div class="card">
+      <div class="field-label">오늘의 루틴 — <span id="dash-date"></span></div>
+      <div id="dash-routine"></div>
+      <div class="progress"><i id="dash-routine-bar" style="width:0%"></i></div>
+    </div>
+    <div class="card">
+      <div class="field-label">진행 중인 목표</div>
+      <div id="dash-goals"></div>
+    </div>
+    <div class="card">
+      <div class="field-label" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📜 기록 로그</span><span class="hint" style="margin:0;" id="log-count"></span>
+      </div>
+      <div id="dash-log"></div>
+    </div>
+    <div class="card">
+      <div class="field-label">바로 가기</div>
+      <div class="quicklinks">
+        <button onclick="go('daily')"><span>📅</span>오늘 플래너 쓰기</button>
+        <button onclick="go('goals')"><span>🎯</span>목표 점검하기</button>
+        <button onclick="go('life')"><span>🎬</span>라이프 플랜</button>
+        <button onclick="go('eulogy')"><span>🕊️</span>나를 위한 추도사</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 데일리 플래너 ===== -->
+  <section class="page" id="page-daily">
+    <h2 class="pt">📅 데일리 플래너</h2>
+    <div class="daynav">
+      <button onclick="shiftDay(-1)">‹</button>
+      <input type="date" id="d-date" onchange="loadDay()">
+      <button class="today-btn" onclick="goToday()">오늘</button>
+      <button onclick="shiftDay(1)">›</button>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">루틴 점검</div>
+      <label class="chk-inline"><input type="checkbox" data-d="r_eulogy"> 추도사 읽기</label>
+      <label class="chk-inline"><input type="checkbox" data-d="r_vision"> 비전 워크시트 점검하기</label>
+      <label class="chk-inline"><input type="checkbox" data-d="r_goal"> 목표 점검하기</label>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="sec-head">주요 과제 1</div>
+        <textarea data-d="task1" placeholder="가장 중요한 과제"></textarea>
+      </div>
+      <div class="card">
+        <div class="sec-head">오늘을 다시 살 수 있다면 무엇을 바꾸고 싶은가?</div>
+        <input type="text" data-d="redo1"><input type="text" data-d="redo2"><input type="text" data-d="redo3">
+      </div>
+      <div class="card">
+        <div class="sec-head">주요 과제 2</div>
+        <textarea data-d="task2" placeholder="두 번째 중요 과제"></textarea>
+      </div>
+      <div class="card">
+        <div class="sec-head">오늘 감사한 일은 무엇인가?</div>
+        <input type="text" data-d="thx1"><input type="text" data-d="thx2"><input type="text" data-d="thx3"><input type="text" data-d="thx4">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">일정</div>
+      <input type="text" data-d="sch1"><input type="text" data-d="sch2"><input type="text" data-d="sch3"><input type="text" data-d="sch4"><input type="text" data-d="sch5">
+    </div>
+
+    <div class="card">
+      <div class="sec-head">부차적 과제</div>
+      <div id="subtasks"></div>
+    </div>
+  </section>
+
+  <!-- ===== 목표 설정 ===== -->
+  <section class="page" id="page-goals">
+    <h2 class="pt">🎯 목표 설정 워크시트</h2>
+    <p class="hint">목표를 여러 개 만들고, 이정표와 반복 횟수(13회)로 실행을 추적하세요.</p>
+    <div id="goals-list"></div>
+    <button class="mini-btn add" onclick="addGoal()">＋ 새 목표 추가</button>
+  </section>
+
+  <!-- ===== 라이프 플랜 (10/5/1년 비전) ===== -->
+  <section class="page" id="page-life">
+    <div class="green-head">라이프 플랜 : 비전</div>
+    <div class="seg">
+      <button class="seg-btn active" data-life="10" onclick="switchLife('10')">10년</button>
+      <button class="seg-btn" data-life="5" onclick="switchLife('5')">5년</button>
+      <button class="seg-btn" data-life="1" onclick="switchLife('1')">1년</button>
+    </div>
+    <div id="life10"></div>
+    <div id="life5" style="display:none"></div>
+    <div id="life1" style="display:none"></div>
+  </section>
+
+  <!-- ===== 나를 위한 추도사 ===== -->
+  <section class="page" id="page-eulogy">
+    <div class="green-head">나를 위한 추도사</div>
+    <div class="card">
+      <p class="hint">삶의 끝에서 사람들이 나를 어떻게 기억하길 바라는지 적어보세요. 매일 데일리 플래너의 "추도사 읽기"에서 이 글을 읽습니다. 입력하면 자동 저장됩니다.</p>
+      <textarea class="story-area" id="eulogy-text" placeholder="내가 어떤 사람이었고, 무엇을 남겼으며, 어떻게 살았는지..."></textarea>
+    </div>
+  </section>
+
+  <!-- ===== 스토리 ===== -->
+  <section class="page" id="page-story">
+    <div class="green-head">당신의 스토리를 쓰세요</div>
+    <div class="card">
+      <p class="hint">당신이 되고 싶은 사람, 지나온 길, 앞으로 쓰고 싶은 이야기를 자유롭게 적어보세요. 입력하면 자동 저장됩니다.</p>
+      <textarea class="story-area" id="story-text" placeholder="여기에 당신의 이야기를 쓰세요..."></textarea>
+    </div>
+  </section>
+
+</div>
+
+<div class="bottomnav">
+  <button class="active" data-nav="dash" onclick="go('dash')"><span class="ic">📊</span>대시보드</button>
+  <button data-nav="daily" onclick="go('daily')"><span class="ic">📅</span>데일리</button>
+  <button data-nav="goals" onclick="go('goals')"><span class="ic">🎯</span>목표</button>
+  <button data-nav="life" onclick="go('life')"><span class="ic">🎬</span>비전</button>
+  <button data-nav="eulogy" onclick="go('eulogy')"><span class="ic">🕊️</span>추도사</button>
+  <button data-nav="story" onclick="go('story')"><span class="ic">✍️</span>스토리</button>
+</div>
+
+<div class="saved-toast" id="toast">저장됨 ✓</div>
+
+<script>
+/* ============ 저장소 ============ */
+const KEY='doeneun-planner-v1';
+let DB=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||fresh();}catch(e){return fresh();}}
+function fresh(){return{days:{},goals:[],life10:{},life5:{},life1:{},story:'',eulogy:'',_updatedAt:0};}
+let saveTimer=null;
+function save(silent){
+  DB._updatedAt=Date.now();
+  localStorage.setItem(KEY,JSON.stringify(DB));
+  if(!silent){clearTimeout(saveTimer);const t=document.getElementById('toast');
+    t.classList.add('show');saveTimer=setTimeout(()=>t.classList.remove('show'),900);}
+  if(typeof Sync!=='undefined')Sync.schedulePush();
+}
+function persistLocalRaw(){localStorage.setItem(KEY,JSON.stringify(DB));}
+function refreshAllFromDB(){
+  buildLife('life10',DB.life10||{});buildLife('life5',DB.life5||{});buildLife('life1',DB.life1||{});
+  const cur=document.querySelector('.seg-btn.active');switchLife(cur?cur.dataset.life:'10');
+  renderGoals();loadDay();
+  document.getElementById('story-text').value=DB.story||'';
+  document.getElementById('eulogy-text').value=DB.eulogy||'';
+  renderDash();
+}
+
+/* ============ 클라우드 동기화 (Supabase) ============ */
+const Sync=(function(){
+  const CFG='doeneun-sync-cfg';   // {url,key}
+  const SES='doeneun-sync-ses';   // {access_token,refresh_token,user_id,email,expires_at}
+  let cfg=jload(CFG)||{}, ses=jload(SES)||null, pushT=null, busy=false;
+  function jload(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+  function jsave(k,v){localStorage.setItem(k,JSON.stringify(v));}
+  function ready(){return !!(cfg.url&&cfg.key);}
+  function loggedIn(){return !!(ses&&ses.access_token);}
+  function online(){return (typeof navigator==='undefined')||navigator.onLine!==false;}
+  function trim(u){return (u||'').replace(/\/+$/,'');}
+
+  async function authFetch(path,body){
+    const r=await fetch(trim(cfg.url)+'/auth/v1/'+path,{method:'POST',
+      headers:{'apikey':cfg.key,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error_description||j.msg||j.message||('오류 '+r.status));
+    return j;
+  }
+  function setSession(j){
+    if(!j.access_token)return false;
+    ses={access_token:j.access_token,refresh_token:j.refresh_token,
+      user_id:(j.user&&j.user.id)||ses&&ses.user_id,
+      email:(j.user&&j.user.email)||ses&&ses.email,
+      expires_at:Date.now()+((j.expires_in||3600)*1000)};
+    jsave(SES,ses);return true;
+  }
+  async function refresh(){
+    if(!ses||!ses.refresh_token)throw new Error('세션 없음');
+    const j=await authFetch('token?grant_type=refresh_token',{refresh_token:ses.refresh_token});
+    setSession(j);
+  }
+  async function rest(method,path,body){
+    async function call(){
+      const h={'apikey':cfg.key,'Authorization':'Bearer '+ses.access_token,'Content-Type':'application/json'};
+      if(method!=='GET')h['Prefer']='resolution=merge-duplicates,return=minimal';
+      const opt={method,headers:h};if(body)opt.body=JSON.stringify(body);
+      return fetch(trim(cfg.url)+'/rest/v1/'+path,opt);
+    }
+    let r=await call();
+    if(r.status===401){await refresh();r=await call();}
+    return r;
+  }
+  async function pull(){
+    const r=await rest('GET','planner_state?select=data,updated_at&limit=1');
+    if(!r.ok)throw new Error('불러오기 실패('+r.status+')');
+    const arr=await r.json();return arr&&arr[0]?arr[0]:null;
+  }
+  async function push(){
+    const body=[{user_id:ses.user_id,data:DB,updated_at:new Date(DB._updatedAt||Date.now()).toISOString()}];
+    const r=await rest('POST','planner_state?on_conflict=user_id',body);
+    if(!r.ok){const t=await r.text().catch(()=>'');throw new Error('저장 실패('+r.status+') '+t);}
+  }
+  // 병합: 최신 _updatedAt 우선 (한쪽이 비었으면 다른 쪽)
+  function merge(remote){
+    if(!remote)return {changed:false,pushNeeded:true};
+    const rd=remote.data||{}; const rt=rd._updatedAt||Date.parse(remote.updated_at)||0;
+    const lt=DB._updatedAt||0;
+    if(rt>lt){ DB=Object.assign(fresh(),rd); persistLocalRaw(); return {changed:true,pushNeeded:false}; }
+    if(lt>rt){ return {changed:false,pushNeeded:true}; }
+    return {changed:false,pushNeeded:false};
+  }
+  async function syncNow(showUI){
+    if(!ready()||!loggedIn()||!online()||busy)return;
+    busy=true;setStatus('동기화 중…');
+    try{
+      const remote=await pull();
+      const res=merge(remote);
+      if(res.changed)refreshAllFromDB();
+      if(res.pushNeeded||!remote)await push();
+      setStatus('동기화됨 · '+ses.email, 'ok');
+    }catch(e){ setStatus('동기화 오류: '+e.message,'err'); }
+    finally{ busy=false; updateDot(); }
+  }
+  function schedulePush(){
+    if(!loggedIn()||!ready())return;
+    clearTimeout(pushT);
+    pushT=setTimeout(async()=>{
+      if(!online())return;
+      try{ setStatus('저장 중…'); await push(); setStatus('동기화됨 · '+ses.email,'ok'); }
+      catch(e){ setStatus('동기화 오류: '+e.message,'err'); }
+      updateDot();
+    },1500);
+  }
+  // ---- UI helpers ----
+  function setStatus(msg,cls){
+    const el=document.getElementById('sync-status');if(!el)return;
+    el.textContent=msg;el.className='';if(cls)el.classList.add(cls);
+  }
+  function updateDot(){
+    const dot=document.getElementById('sync-dot'),btn=document.getElementById('sync-btn');
+    if(!dot)return;
+    if(loggedIn()){dot.textContent='●';dot.style.color='#7CFFB0';btn.classList.add('on');}
+    else{dot.textContent='○';dot.style.color='';btn.classList.remove('on');}
+    const act=document.getElementById('sync-actions');if(act)act.style.display=loggedIn()?'block':'none';
+  }
+  function fillForm(){
+    if(document.getElementById('sb-url')){
+      document.getElementById('sb-url').value=cfg.url||'';
+      document.getElementById('sb-key').value=cfg.key||'';
+      if(ses&&ses.email)document.getElementById('sb-email').value=ses.email;
+    }
+  }
+  function refreshStatusText(){
+    if(loggedIn())setStatus('동기화됨 · '+ses.email,'ok');
+    else if(ready())setStatus('연결됨. 로그인하면 자동 동기화됩니다.');
+    else setStatus('이 기기에만 저장 중입니다. 아래에 Supabase 정보를 입력하세요.');
+  }
+  return {
+    schedulePush, syncNow,
+    open(){ fillForm(); updateDot(); refreshStatusText(); },
+    saveConn(url,key){ cfg={url:trim(url),key:key.trim()}; jsave(CFG,cfg); refreshStatusText(); },
+    async auth(mode,email,password){
+      if(!ready()){setStatus('먼저 Supabase 연결 정보를 저장하세요.','err');return;}
+      try{
+        setStatus(mode==='signup'?'회원가입 중…':'로그인 중…');
+        const j=await authFetch(mode==='signup'?'signup':'token?grant_type=password',{email,password});
+        if(!setSession(j)){ setStatus('가입됨. 확인 메일의 링크를 누른 뒤 로그인하세요.'); return; }
+        updateDot(); await syncNow(true);
+      }catch(e){ setStatus('실패: '+e.message,'err'); }
+    },
+    logout(){ ses=null; localStorage.removeItem(SES); updateDot(); refreshStatusText(); },
+    init(){ updateDot(); if(loggedIn())syncNow(false); }
+  };
+})();
+function openSync(){document.getElementById('sync-modal').classList.add('show');Sync.open();}
+function closeSync(){document.getElementById('sync-modal').classList.remove('show');}
+function saveConn(){Sync.saveConn(document.getElementById('sb-url').value,document.getElementById('sb-key').value);}
+function doAuth(mode){Sync.auth(mode,document.getElementById('sb-email').value.trim(),document.getElementById('sb-pass').value);}
+function doLogout(){Sync.logout();}
+function syncNow(){Sync.syncNow(true);}
+
+/* ============ 네비게이션 ============ */
+const pages={dash:'page-dash',daily:'page-daily',goals:'page-goals',life:'page-life',eulogy:'page-eulogy',story:'page-story'};
+function go(k){
+  Object.values(pages).forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(pages[k]).classList.add('active');
+  document.querySelectorAll('.bottomnav button').forEach(b=>b.classList.toggle('active',b.dataset.nav===k));
+  window.scrollTo(0,0);
+  if(k==='dash')renderDash();
+}
+
+/* ============ 데일리 플래너 ============ */
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function todayStr(){return ymd(new Date());}
+function curDate(){return document.getElementById('d-date').value||todayStr();}
+function goToday(){document.getElementById('d-date').value=todayStr();loadDay();}
+function shiftDay(n){const d=new Date(curDate());d.setDate(d.getDate()+n);
+  document.getElementById('d-date').value=ymd(d);loadDay();}
+
+const SUBTASK_COUNT=8;
+function buildSubtasks(){
+  const c=document.getElementById('subtasks');c.innerHTML='';
+  for(let i=0;i<SUBTASK_COUNT;i++){
+    const row=document.createElement('label');row.className='chk';
+    row.innerHTML='<input type="checkbox" data-sub="'+i+'"><input type="text" class="grow" data-subtxt="'+i+'" placeholder="부차적 과제">';
+    c.appendChild(row);
+  }
+  c.querySelectorAll('[data-sub]').forEach(el=>el.addEventListener('change',saveDay));
+  c.querySelectorAll('[data-subtxt]').forEach(el=>el.addEventListener('input',saveDayDebounced));
+}
+function loadDay(){
+  const day=DB.days[curDate()]||{};
+  document.querySelectorAll('#page-daily [data-d]').forEach(el=>{
+    const k=el.dataset.d;
+    if(el.type==='checkbox')el.checked=!!day[k];else el.value=day[k]||'';
+  });
+  const subs=day.subs||[],subtxt=day.subtxt||[];
+  document.querySelectorAll('[data-sub]').forEach(el=>el.checked=!!subs[+el.dataset.sub]);
+  document.querySelectorAll('[data-subtxt]').forEach(el=>el.value=subtxt[+el.dataset.subtxt]||'');
+}
+function saveDay(){
+  const d={};
+  document.querySelectorAll('#page-daily [data-d]').forEach(el=>{
+    const k=el.dataset.d;d[k]=el.type==='checkbox'?el.checked:el.value;
+  });
+  d.subs=[];d.subtxt=[];
+  document.querySelectorAll('[data-sub]').forEach(el=>d.subs[+el.dataset.sub]=el.checked);
+  document.querySelectorAll('[data-subtxt]').forEach(el=>d.subtxt[+el.dataset.subtxt]=el.value);
+  // 빈 날은 저장 안 함(작성일수 정확도)
+  if(isDayEmpty(d))delete DB.days[curDate()];else DB.days[curDate()]=d;
+  save();
+}
+function isDayEmpty(d){
+  for(const k in d){const v=d[k];
+    if(Array.isArray(v)){if(v.some(x=>x===true||(typeof x==='string'&&x.trim())))return false;}
+    else if(v===true)return false;
+    else if(typeof v==='string'&&v.trim())return false;}
+  return true;
+}
+let dayDebTimer=null;
+function saveDayDebounced(){clearTimeout(dayDebTimer);dayDebTimer=setTimeout(saveDay,400);}
+
+/* ============ 목표 ============ */
+function addGoal(){
+  DB.goals.push({id:Date.now(),title:'',why:'',deadline:'',partners:['','',''],
+    milestones:[{t:'',done:false},{t:'',done:false},{t:'',done:false}],
+    sacrifice:'',reps:Array(13).fill(false)});
+  save(true);renderGoals();
+}
+function delGoal(id){
+  if(!confirm('이 목표를 삭제할까요?'))return;
+  DB.goals=DB.goals.filter(g=>g.id!==id);save();renderGoals();
+}
+function renderGoals(){
+  const c=document.getElementById('goals-list');c.innerHTML='';
+  if(!DB.goals.length){c.innerHTML='<div class="empty">아직 목표가 없습니다. 아래 버튼으로 첫 목표를 추가하세요.</div>';return;}
+  DB.goals.forEach(g=>{
+    const repDone=g.reps.filter(Boolean).length;
+    const el=document.createElement('details');el.className='goal-item';el.open=!g.title;
+    el.innerHTML=`
+      <summary><span class="goal-title-txt">${g.title?escapeHtml(g.title):'제목 없는 목표'}</span><span class="badge">${repDone}/13</span></summary>
+      <div style="margin-top:12px;">
+        <div class="field-label">목표</div>
+        <input type="text" data-g="title" placeholder="이루고 싶은 목표">
+        <div class="field-label">목표가 왜 중요한가?</div>
+        <textarea data-g="why" placeholder="이 목표가 중요한 이유"></textarea>
+        <div class="grid2">
+          <div><div class="field-label">데드라인</div><input type="date" data-g="deadline"></div>
+          <div><div class="field-label">매일 희생해야 할 것</div><input type="text" data-g="sacrifice"></div>
+        </div>
+        <div class="field-label">목표 달성 파트너</div>
+        <div class="grid2"><input type="text" data-p="0" placeholder="파트너 1"><input type="text" data-p="1" placeholder="파트너 2"></div>
+        <input type="text" data-p="2" placeholder="파트너 3">
+        <div class="field-label">이정표</div>
+        <label class="chk"><input type="checkbox" data-m="0"><input type="text" class="grow" data-mt="0" placeholder="1단계"></label>
+        <label class="chk"><input type="checkbox" data-m="1"><input type="text" class="grow" data-mt="1" placeholder="2단계"></label>
+        <label class="chk"><input type="checkbox" data-m="2"><input type="text" class="grow" data-mt="2" placeholder="3단계"></label>
+        <div class="field-label">반복 횟수 (13회)</div>
+        <div class="rep-track" data-rep></div>
+        <div class="row-end"><button class="mini-btn danger" data-del>삭제</button></div>
+      </div>`;
+    // fill values
+    el.querySelector('[data-g="title"]').value=g.title;
+    el.querySelector('[data-g="why"]').value=g.why;
+    el.querySelector('[data-g="deadline"]').value=g.deadline;
+    el.querySelector('[data-g="sacrifice"]').value=g.sacrifice;
+    el.querySelectorAll('[data-p]').forEach(i=>i.value=g.partners[+i.dataset.p]||'');
+    el.querySelectorAll('[data-m]').forEach(i=>i.checked=g.milestones[+i.dataset.m].done);
+    el.querySelectorAll('[data-mt]').forEach(i=>i.value=g.milestones[+i.dataset.mt].t||'');
+    // rep boxes
+    const rt=el.querySelector('[data-rep]');
+    g.reps.forEach((on,idx)=>{
+      const b=document.createElement('div');b.className='rep-box'+(on?' on':'');b.textContent=idx+1;
+      b.onclick=()=>{g.reps[idx]=!g.reps[idx];b.classList.toggle('on',g.reps[idx]);
+        el.querySelector('.badge').textContent=g.reps.filter(Boolean).length+'/13';save();};
+      rt.appendChild(b);
+    });
+    // bindings
+    el.querySelectorAll('[data-g]').forEach(i=>i.addEventListener('input',()=>{
+      g[i.dataset.g]=i.value;
+      if(i.dataset.g==='title')el.querySelector('.goal-title-txt').textContent=i.value||'제목 없는 목표';
+      saveGoalsDebounced();}));
+    el.querySelectorAll('[data-p]').forEach(i=>i.addEventListener('input',()=>{g.partners[+i.dataset.p]=i.value;saveGoalsDebounced();}));
+    el.querySelectorAll('[data-m]').forEach(i=>i.addEventListener('change',()=>{g.milestones[+i.dataset.m].done=i.checked;save();}));
+    el.querySelectorAll('[data-mt]').forEach(i=>i.addEventListener('input',()=>{g.milestones[+i.dataset.mt].t=i.value;saveGoalsDebounced();}));
+    el.querySelector('[data-del]').onclick=()=>delGoal(g.id);
+    c.appendChild(el);
+  });
+}
+let goalTimer=null;
+function saveGoalsDebounced(){clearTimeout(goalTimer);goalTimer=setTimeout(()=>save(true),500);}
+
+/* ============ 라이프 플랜 ============ */
+const LIFE_FIELDS=[
+  {k:'title',label:'올해 당신의 삶을 영화로 만든다면 영화의 제목은?',type:'text'},
+  {k:'age',label:'나이',type:'text'},
+  {k:'career',label:'💼 커리어',type:'area'},
+  {k:'health',label:'💪 건강',type:'area'},
+  {k:'family',label:'👨‍👩‍👧 가족',type:'area'},
+  {k:'friend',label:'🤝 친구',type:'area'},
+  {k:'growth',label:'🌱 내적 성장',type:'area'},
+  {k:'do',label:'☀️ 매일 해야 할 두 가지',type:'area'},
+  {k:'dont',label:'🚫 매일 하지 말아야 할 두 가지',type:'area'},
+  {k:'theme',label:'🧭 현재 내 삶의 핵심 주제',type:'area'}
+];
+function buildLife(containerId,store){
+  const c=document.getElementById(containerId);c.innerHTML='';
+  LIFE_FIELDS.forEach(f=>{
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`<div class="sec-head">${f.label}</div>`;
+    let inp;
+    if(f.type==='text'){inp=document.createElement('input');inp.type='text';}
+    else{inp=document.createElement('textarea');}
+    inp.value=store[f.k]||'';
+    inp.addEventListener('input',()=>{store[f.k]=inp.value;lifeSaveDebounced();});
+    card.appendChild(inp);c.appendChild(card);
+  });
+}
+let lifeTimer=null;
+function lifeSaveDebounced(){clearTimeout(lifeTimer);lifeTimer=setTimeout(()=>save(true),500);}
+function switchLife(h){
+  ['10','5','1'].forEach(x=>{
+    document.getElementById('life'+x).style.display=(x===h)?'block':'none';
+    document.querySelector('.seg-btn[data-life="'+x+'"]').classList.toggle('active',x===h);
+  });
+}
+
+/* ============ 스토리 · 추도사 ============ */
+function buildStory(){
+  const t=document.getElementById('story-text');t.value=DB.story||'';
+  t.addEventListener('input',()=>{DB.story=t.value;lifeSaveDebounced();});
+  const e=document.getElementById('eulogy-text');e.value=DB.eulogy||'';
+  e.addEventListener('input',()=>{DB.eulogy=e.value;lifeSaveDebounced();});
+}
+
+/* ============ 대시보드 ============ */
+function renderDash(){
+  const days=Object.keys(DB.days).sort();
+  document.getElementById('st-days').textContent=days.length;
+  document.getElementById('st-streak').textContent=calcStreak(days);
+  // 오늘 루틴
+  const t=todayStr();document.getElementById('dash-date').textContent=t;
+  const day=DB.days[t]||{};
+  const routines=[['r_eulogy','추도사 읽기'],['r_vision','비전 워크시트 점검'],['r_goal','목표 점검']];
+  let done=0;const rc=document.getElementById('dash-routine');rc.innerHTML='';
+  routines.forEach(([k,lbl])=>{
+    if(day[k])done++;
+    const r=document.createElement('div');r.className='chk';
+    r.innerHTML=`<input type="checkbox" ${day[k]?'checked':''} disabled><span class="grow">${lbl}</span>`;
+    rc.appendChild(r);
+  });
+  document.getElementById('dash-routine-bar').style.width=Math.round(done/3*100)+'%';
+  // 목표
+  const gc=document.getElementById('dash-goals');gc.innerHTML='';
+  if(!DB.goals.length){gc.innerHTML='<div class="empty">진행 중인 목표가 없습니다.</div>';}
+  DB.goals.forEach(g=>{
+    const rd=g.reps.filter(Boolean).length,pct=Math.round(rd/13*100);
+    const md=g.milestones.filter(m=>m.done).length;
+    const el=document.createElement('div');el.className='dash-goal';
+    el.innerHTML=`<div class="gt"><span>${g.title?escapeHtml(g.title):'제목 없는 목표'}</span><span class="badge">${rd}/13</span></div>
+      <div class="hint" style="margin:4px 0 2px;">이정표 ${md}/3 · ${g.deadline?('마감 '+g.deadline):'마감 미정'}</div>
+      <div class="progress"><i style="width:${pct}%"></i></div>`;
+    gc.appendChild(el);
+  });
+  renderLog();
+}
+let logExpanded=false;
+function renderLog(){
+  const days=Object.keys(DB.days).sort().reverse(); // 최신순
+  document.getElementById('log-count').textContent=days.length?('총 '+days.length+'일'):'';
+  const c=document.getElementById('dash-log');c.innerHTML='';
+  if(!days.length){c.innerHTML='<div class="empty">아직 기록이 없습니다. 데일리 플래너를 작성하면 여기에 로그가 쌓입니다.</div>';return;}
+  const shown=logExpanded?days:days.slice(0,5);
+  shown.forEach(date=>{
+    const d=DB.days[date]||{};
+    const routines=['r_eulogy','r_vision','r_goal'];
+    const dots=routines.map(k=>'<i class="'+(d[k]?'on':'')+'"></i>').join('');
+    const summary=(d.task1||'').trim()||(d.task2||'').trim()||(d.sch1||'').trim()||'기록 있음';
+    const el=document.createElement('div');el.className='log-item';
+    el.innerHTML=`<span class="log-date">${fmtDate(date)}</span>
+      <span class="log-sum">${escapeHtml(summary)}</span>
+      <span class="log-dots">${dots}</span>`;
+    el.onclick=()=>openDay(date);
+    c.appendChild(el);
+  });
+  if(days.length>5){
+    const m=document.createElement('div');m.className='log-more';
+    m.textContent=logExpanded?'접기 ▲':('전체 보기 ('+days.length+') ▼');
+    m.onclick=()=>{logExpanded=!logExpanded;renderLog();};
+    c.appendChild(m);
+  }
+}
+function fmtDate(s){
+  const w=['일','월','화','수','목','금','토'];
+  const d=new Date(s);const md=(d.getMonth()+1)+'.'+d.getDate();
+  return md+' ('+w[d.getDay()]+')';
+}
+function openDay(date){
+  go('daily');
+  document.getElementById('d-date').value=date;
+  loadDay();
+}
+function calcStreak(days){
+  if(!days.length)return 0;
+  const set=new Set(days);let streak=0;const d=new Date();
+  // 오늘 기록이 없으면 어제부터 카운트
+  if(!set.has(ymd(d)))d.setDate(d.getDate()-1);
+  while(set.has(ymd(d))){streak++;d.setDate(d.getDate()-1);}
+  return streak;
+}
+
+/* ============ 유틸 ============ */
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='되는사람-플래너-'+todayStr()+'.json';a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const data=JSON.parse(r.result);
+    if(!confirm('현재 데이터를 불러온 파일로 대체할까요?'))return;
+    DB=Object.assign(fresh(),data);save();initAll();alert('불러오기 완료');
+  }catch(err){alert('파일을 읽을 수 없습니다.');}};
+  r.readAsText(f);e.target.value='';
+}
+
+/* ============ 초기화 ============ */
+function initAll(){
+  document.getElementById('d-date').value=todayStr();
+  loadDay();renderGoals();
+  buildLife('life10',DB.life10);buildLife('life5',DB.life5);buildLife('life1',DB.life1);
+  switchLife('10');
+  document.getElementById('story-text').value=DB.story||'';
+  document.getElementById('eulogy-text').value=DB.eulogy||'';
+  renderDash();
+}
+function bindDaily(){
+  document.querySelectorAll('#page-daily [data-d]').forEach(el=>{
+    const ev=el.type==='checkbox'?'change':'input';
+    el.addEventListener(ev,el.type==='checkbox'?saveDay:saveDayDebounced);
+  });
+}
+buildSubtasks();bindDaily();buildStory();initAll();
+Sync.init();
+window.addEventListener('online',()=>Sync.syncNow(false));
+</script>
+</body>
+</html>
